@@ -1,4 +1,4 @@
-package com.example.appnutricional.ui.login
+package com.example.appnutricional.auth.ui.login
 
 data class LoginUiState(
     val email: String = "",

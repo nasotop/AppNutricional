@@ -1,4 +1,4 @@
-package com.example.appnutricional.ui.recovery
+package com.example.appnutricional.auth.ui.recovery
 
 data class RecoveryUiState (
     val email: String = "",

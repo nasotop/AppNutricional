@@ -5,19 +5,25 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.appnutricional.ui.theme.AppNutricionalTheme
-import com.example.appnutricional.routes.routes
-import com.example.appnutricional.ui.login.LoginApp
-import com.example.appnutricional.ui.recovery.RecoveryApp
-import com.example.appnutricional.ui.register.RegisterApp
+import com.example.appnutricional.navigation.Routes
+import com.example.appnutricional.auth.ui.login.LoginScreen
+import com.example.appnutricional.auth.ui.recovery.RecoveryScreen
+import com.example.appnutricional.auth.ui.register.RegisterScreen
+import com.example.appnutricional.home.data.InMemoryIngredientsRepository
+import com.example.appnutricional.home.data.InMemoryRecipesRepository
+import com.example.appnutricional.home.domain.IngredientsRepository
+import com.example.appnutricional.home.domain.RecipesRepository
+import com.example.appnutricional.home.ui.home.HomeScreen
+import com.example.appnutricional.home.ui.home.HomeViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,24 +45,34 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NavApp() {
-    var navController = rememberNavController()
-
+    val navController = rememberNavController()
+    val ingredientRepo: IngredientsRepository = InMemoryIngredientsRepository()
+    val recipeRepo: RecipesRepository = InMemoryRecipesRepository(ingredientRepo)
     NavHost(
         navController = navController,
-        startDestination = routes.LOGIN
+        startDestination = Routes.LOGIN
     ) {
-        composable(routes.LOGIN) {
-            LoginApp(
-                onGoRecovery = { navController.navigate(routes.RECOVERY) },
-                onGoRegister = { navController.navigate(routes.REGISTER) }
+        composable(Routes.LOGIN) {
+            LoginScreen(
+                onGoRecovery = { navController.navigate(Routes.RECOVERY) },
+                onGoRegister = { navController.navigate(Routes.REGISTER) },
+                onGoHome = { navController.navigate(Routes.HOME) }
             )
         }
-        composable(routes.RECOVERY) {
-            RecoveryApp({ navController.popBackStack() })
+        composable(Routes.RECOVERY) {
+            RecoveryScreen({ navController.popBackStack() })
         }
 
-        composable(routes.REGISTER) {
-            RegisterApp({ navController.popBackStack() })
+        composable(Routes.REGISTER) {
+            RegisterScreen({ navController.popBackStack() })
+        }
+        composable(Routes.HOME) {
+            val vm = remember { HomeViewModel(ingredientRepo, recipeRepo) }
+            HomeScreen(
+                vm,
+                onGoBack = { navController.popBackStack() },
+                onRecipeChosen = {}
+            )
         }
     }
 }
@@ -64,8 +80,8 @@ fun NavApp() {
 @Preview(showBackground = true)
 @Composable
 fun PreviewAppScaffold() {
-    AppNutricionalTheme (
+    AppNutricionalTheme(
         useDarkTheme = null,
         useDynamicColor = false
-    ){ LoginApp(onGoRegister = {}, onGoRecovery = {}) }
+    ) { LoginScreen(onGoRegister = {}, onGoRecovery = {}, onGoHome = {}) }
 }

@@ -1,4 +1,4 @@
-package com.example.appnutricional.ui.recovery
+package com.example.appnutricional.auth.ui.recovery
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,10 +29,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.appnutricional.ui.components.TopBar
-import com.example.appnutricional.ui.login.onLoginSuccess
 
 @Composable
-fun RecoveryApp (
+fun RecoveryScreen (
     onGoBack: ()->Unit,
     vm: RecoveryViewModel = viewModel()
 
@@ -106,7 +105,7 @@ fun RecoveryApp (
             Button(
                 onClick = {
                     vm.submitRecovery(
-                        onSuccess = { onLoginSuccess() },
+                        onSuccess = { },
                         onError = {})
                 },
                 enabled = !state.isSubmitting,

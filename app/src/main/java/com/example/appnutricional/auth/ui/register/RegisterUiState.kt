@@ -1,4 +1,4 @@
-package com.example.appnutricional.ui.register
+package com.example.appnutricional.auth.ui.register
 
 
 data class RegisterUiState(

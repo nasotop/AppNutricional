@@ -1,4 +1,4 @@
-package com.example.appnutricional.ui.model
+package com.example.appnutricional.core.domain
 
 data class UserModel(
     val names: String,

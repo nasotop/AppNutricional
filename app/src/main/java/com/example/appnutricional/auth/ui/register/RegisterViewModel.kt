@@ -1,10 +1,11 @@
-package com.example.appnutricional.ui.register
+package com.example.appnutricional.auth.ui.register
 
+import android.util.Patterns
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.appnutricional.ui.model.UserModel
+import com.example.appnutricional.core.domain.UserModel
 
 class RegisterViewModel : ViewModel() {
     val usuarios = mutableListOf(
@@ -45,7 +46,7 @@ class RegisterViewModel : ViewModel() {
     fun validate() {
         val emailError = when {
             uiState.email.isBlank() -> "El correo no puede estar vacío"
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email)
+            !Patterns.EMAIL_ADDRESS.matcher(uiState.email)
                 .matches() -> "Formato de email inválido"
 
             else -> null

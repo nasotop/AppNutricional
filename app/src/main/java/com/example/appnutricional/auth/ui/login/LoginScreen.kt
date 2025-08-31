@@ -1,5 +1,6 @@
-package com.example.appnutricional.ui.login
+package com.example.appnutricional.auth.ui.login
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +14,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -23,10 +26,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -38,23 +41,24 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.appnutricional.ui.components.TopBar
 import com.example.appnutricional.R
-import com.example.appnutricional.ui.model.UserModel
-
-
+import com.example.appnutricional.ui.theme.AppNutricionalTheme
 
 
 @Composable
-fun LoginApp(
+fun LoginScreen(
     onGoRegister: () -> Unit,
     onGoRecovery: () -> Unit,
+    onGoHome: () -> Unit,
     vm: LoginViewModel = viewModel()
 
 ) {
     val state = vm.uiState
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             TopBar(
@@ -135,7 +139,7 @@ fun LoginApp(
                     value = state.password,
                     onValueChange = vm::onPasswordChange,
                     label = { Text("Contraseña") },
-                    placeholder = { Text("Mínimo 8 caracteres") },
+                    placeholder = { Text("Ingrese su contraseña") },
                     isError = state.showErrors && state.passwordError != null,
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
@@ -173,8 +177,10 @@ fun LoginApp(
                 Button(
                     onClick = {
                         vm.submitLogin(
-                            onSuccess = { onLoginSuccess() },
-                            onError = {})
+                            onSuccess = { onGoHome() },
+                            onError = { msg ->
+                                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                            })
                     },
                     enabled = !state.isSubmitting,
                     modifier = Modifier
@@ -188,6 +194,12 @@ fun LoginApp(
 
                 TextButton(
                     onClick = onGoRegister,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
@@ -200,6 +212,12 @@ fun LoginApp(
                 }
                 TextButton(
                     onClick = onGoRecovery,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
@@ -215,7 +233,12 @@ fun LoginApp(
     }
 }
 
-fun onLoginSuccess() {
 
-
+@Preview(showBackground = true)
+@Composable
+fun PreviewAppScaffold() {
+    AppNutricionalTheme(
+        useDarkTheme = null,
+        useDynamicColor = false
+    ) { LoginScreen(onGoRegister = {}, onGoRecovery = {}, onGoHome = {}) }
 }

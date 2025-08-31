@@ -1,0 +1,98 @@
+package com.example.appnutricional.home.data
+
+import com.example.appnutricional.core.domain.IngredientModel
+import com.example.appnutricional.core.domain.IngredientType
+import com.example.appnutricional.core.domain.RecipeModel
+import com.example.appnutricional.home.domain.IngredientsRepository
+import com.example.appnutricional.home.domain.RecipesRepository
+
+class InMemoryRecipesRepository(
+    private val ingredientRepo: IngredientsRepository
+
+) : RecipesRepository {
+    val recipes = mutableListOf(
+        RecipeModel(
+            name = "Ensalada fresca",
+            ingredients = listOf(
+                IngredientModel("Tomate", IngredientType.VEGETABLES),
+                IngredientModel("Lechuga", IngredientType.VEGETABLES),
+                IngredientModel("Aceite de oliva", IngredientType.FATS)
+            )
+        ),
+        RecipeModel(
+            name = "Arroz con pollo",
+            ingredients = listOf(
+                IngredientModel("Arroz", IngredientType.GRAINS),
+                IngredientModel("Pollo", IngredientType.MEATS),
+                IngredientModel("Tomate", IngredientType.VEGETABLES)
+            )
+        ),
+        RecipeModel(
+            name = "Batido de frutas",
+            ingredients = listOf(
+                IngredientModel("Leche", IngredientType.DAIRY),
+                IngredientModel("Manzana", IngredientType.FRUITS),
+                IngredientModel("Plátano", IngredientType.FRUITS)
+            )
+        ),
+        RecipeModel(
+            name = "Té dulce",
+            ingredients = listOf(
+                IngredientModel("Té verde", IngredientType.BEVERAGES),
+                IngredientModel("Azúcar", IngredientType.SWEETENERS)
+            )
+        )
+    ).map(::normalizedOrThrow)
+        .toMutableList()
+
+    override fun getAll(): List<RecipeModel> = recipes.toList()
+
+    override fun findByName(name: String): RecipeModel? =
+        recipes.firstOrNull { it.name.equals(name, ignoreCase = true) }
+
+    override fun listByIngredientName(ingredientName: String): List<RecipeModel> =
+        recipes.filter { recipe ->
+            recipe.ingredients.any { it.name.equals(ingredientName, ignoreCase = true) }
+        }
+
+    override fun add(recipe: RecipeModel): Boolean {
+        if (recipes.any { it.name.equals(recipe.name, ignoreCase = true) }) return false
+        val canon = normalizeRecipe(recipe) ?: return false
+        recipes.add(canon)
+        return true
+    }
+
+    override fun update(name: String, newRecipe: RecipeModel): Boolean {
+        val index = recipes.indexOfFirst { it.name.equals(name, ignoreCase = true) }
+        if (index == -1) return false
+        val canon = normalizeRecipe(newRecipe) ?: return false
+        recipes[index] = canon
+        return true
+    }
+
+    override fun delete(name: String): Boolean {
+        val it = recipes.iterator()
+        var removed = false
+        while (it.hasNext()) {
+            if (it.next().name.equals(name, ignoreCase = true)) {
+                it.remove()
+                removed = true
+            }
+        }
+        return removed
+    }
+
+    private fun normalizeRecipe(recipe: RecipeModel): RecipeModel? {
+        val canon = recipe.ingredients.mapNotNull { wanted ->
+            ingredientRepo.findByName(wanted.name)
+        }
+        if (canon.size != recipe.ingredients.size) return null
+        return recipe.copy(ingredients = canon)
+    }
+
+    // Para sembrar el repositorio garantizando validez desde el inicio
+    private fun normalizedOrThrow(recipe: RecipeModel): RecipeModel =
+        normalizeRecipe(recipe)
+            ?: error("Seed inválida: ingrediente no encontrado en IngredientRepository")
+
+}

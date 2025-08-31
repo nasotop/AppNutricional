@@ -1,5 +1,6 @@
-package com.example.appnutricional.ui.recovery
+package com.example.appnutricional.auth.ui.recovery
 
+import android.util.Patterns
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -15,7 +16,7 @@ class RecoveryViewModel: ViewModel() {
     fun validate() {
         val emailError= when {
             uiState.email.isBlank() ->"El correo no puede estar vacío"
-            !android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches() -> "Formato de email inválido"
+            !Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches() -> "Formato de email inválido"
             else -> null
         }
         val valid = emailError == null
