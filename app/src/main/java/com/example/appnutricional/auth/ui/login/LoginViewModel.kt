@@ -6,12 +6,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.appnutricional.auth.domain.AuthValidators
 import com.example.appnutricional.auth.data.InMemoryUserRepository
+import com.example.appnutricional.auth.domain.UserRepository
 import com.example.appnutricional.core.domain.UserModel
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(private val userRepository: UserRepository) : ViewModel() {
     var uiState by mutableStateOf(LoginUiState())
         private set
-    private var userRepository = InMemoryUserRepository()
 
 
     fun onEmailChange(newEmail: String) {

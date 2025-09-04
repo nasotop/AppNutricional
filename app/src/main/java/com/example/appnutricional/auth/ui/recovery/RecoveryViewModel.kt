@@ -5,8 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.appnutricional.auth.domain.UserRepository
 
-class RecoveryViewModel: ViewModel() {
+class RecoveryViewModel(private val userRepo: UserRepository): ViewModel() {
     var uiState by mutableStateOf(RecoveryUiState())
         private set
     fun onEmailChange(newEmail: String){
@@ -33,6 +34,8 @@ class RecoveryViewModel: ViewModel() {
         if (!uiState.isValid) return
 
         uiState = uiState.copy(isSubmitting = true)
+
+
 
         uiState = uiState.copy(isSubmitting = false)
         onSuccess()

@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.appnutricional.ui.components.TopBar
 import com.example.appnutricional.R
+import com.example.appnutricional.auth.data.InMemoryUserRepository
+import com.example.appnutricional.auth.domain.UserRepository
 import com.example.appnutricional.ui.theme.AppNutricionalTheme
 
 
@@ -54,7 +57,7 @@ fun LoginScreen(
     onGoRegister: () -> Unit,
     onGoRecovery: () -> Unit,
     onGoHome: () -> Unit,
-    vm: LoginViewModel = viewModel()
+    vm: LoginViewModel
 
 ) {
     val state = vm.uiState
@@ -240,5 +243,8 @@ fun PreviewAppScaffold() {
     AppNutricionalTheme(
         useDarkTheme = null,
         useDynamicColor = false
-    ) { LoginScreen(onGoRegister = {}, onGoRecovery = {}, onGoHome = {}) }
+    ) {
+        val userRepo: UserRepository = InMemoryUserRepository()
+        val vm = remember { LoginViewModel(userRepo) }
+        LoginScreen(onGoRegister = {}, onGoRecovery = {}, onGoHome = {}, vm) }
 }

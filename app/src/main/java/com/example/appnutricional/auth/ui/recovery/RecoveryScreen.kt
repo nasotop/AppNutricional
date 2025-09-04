@@ -1,5 +1,6 @@
 package com.example.appnutricional.auth.ui.recovery
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
@@ -33,10 +35,12 @@ import com.example.appnutricional.ui.components.TopBar
 @Composable
 fun RecoveryScreen (
     onGoBack: ()->Unit,
-    vm: RecoveryViewModel = viewModel()
+    vm: RecoveryViewModel
 
 ){
     val state = vm.uiState
+    val context = LocalContext.current
+
     Scaffold(
         topBar = {
             TopBar(
@@ -105,7 +109,9 @@ fun RecoveryScreen (
             Button(
                 onClick = {
                     vm.submitRecovery(
-                        onSuccess = { },
+                        onSuccess = {
+                            Toast.makeText(context, "Se le enviará información para recuperar contraseña", Toast.LENGTH_LONG).show()
+                        },
                         onError = {})
                 },
                 enabled = !state.isSubmitting,

@@ -5,16 +5,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.appnutricional.auth.data.InMemoryUserRepository
+import com.example.appnutricional.auth.domain.UserRepository
 import com.example.appnutricional.core.domain.UserModel
 
-class RegisterViewModel : ViewModel() {
-    val usuarios = mutableListOf(
-        UserModel("Juan", "Pérez", "juan@example.com", "12345678"),
-        UserModel("Ana", "López", "ana@example.com", "abcdef12"),
-        UserModel("Carlos", "García", "carlos@example.com", "passw0rd"),
-        UserModel("Lucía", "Martínez", "lucia@example.com", "qwertyui"),
-        UserModel("Pedro", "Sánchez", "pedro@example.com", "zxcvbnm1")
-    )
+class RegisterViewModel(private val userRepository: UserRepository) : ViewModel() {
     var uiState by mutableStateOf(RegisterUiState())
         private set
 
@@ -83,14 +78,14 @@ class RegisterViewModel : ViewModel() {
         )
     }
 
-    fun submitRegister(onSuccess: (Boolean, UserModel) -> Unit, onError: (String) -> Unit) {
+    fun submitRegister(onSuccess: (Boolean) -> Unit, onError: (String) -> Unit) {
         validate()
 
 
 
         uiState = uiState.copy(showErrors = true)
 
-        if (!uiState.isValid) return
+        if (!uiState.isValid) return onError("Modelo invalido")
 
         uiState = uiState.copy(isSubmitting = true)
 
@@ -101,23 +96,22 @@ class RegisterViewModel : ViewModel() {
             password = uiState.password
         )
 
-        val existe = usuarios.any { it.email.equals(uiState.email, ignoreCase = true) }
+        val usuario = userRepository.findByEmail(uiState.email)
 
-        if (existe) {
+        if (usuario != null) {
             uiState = uiState.copy(showErrors = true)
             uiState = uiState.copy(isSubmitting = false)
             uiState = uiState.copy(
                 emailError = "El correo ya se encuentra registrado"
             )
+            return onError("Modelo invalido")
         }
-        val result = usuarios.add(user)
+        val result = userRepository.add(user)
 
         uiState = uiState.copy(isSubmitting = false)
 
-        onSuccess(result, user)
+        onSuccess(result)
     }
 
-    fun onRegisterSuccess(success: Boolean, user: UserModel) {
 
-    }
 }

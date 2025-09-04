@@ -13,11 +13,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.appnutricional.auth.data.InMemoryUserRepository
+import com.example.appnutricional.auth.domain.UserRepository
 import com.example.appnutricional.ui.theme.AppNutricionalTheme
 import com.example.appnutricional.navigation.Routes
 import com.example.appnutricional.auth.ui.login.LoginScreen
+import com.example.appnutricional.auth.ui.login.LoginViewModel
 import com.example.appnutricional.auth.ui.recovery.RecoveryScreen
+import com.example.appnutricional.auth.ui.recovery.RecoveryViewModel
 import com.example.appnutricional.auth.ui.register.RegisterScreen
+import com.example.appnutricional.auth.ui.register.RegisterViewModel
 import com.example.appnutricional.home.data.InMemoryIngredientsRepository
 import com.example.appnutricional.home.data.InMemoryRecipesRepository
 import com.example.appnutricional.home.domain.IngredientsRepository
@@ -48,23 +53,33 @@ fun NavApp() {
     val navController = rememberNavController()
     val ingredientRepo: IngredientsRepository = InMemoryIngredientsRepository()
     val recipeRepo: RecipesRepository = InMemoryRecipesRepository(ingredientRepo)
+    val userRepo: UserRepository = InMemoryUserRepository()
     NavHost(
         navController = navController,
         startDestination = Routes.LOGIN
     ) {
         composable(Routes.LOGIN) {
+            val vm = remember { LoginViewModel(userRepo) }
             LoginScreen(
                 onGoRecovery = { navController.navigate(Routes.RECOVERY) },
                 onGoRegister = { navController.navigate(Routes.REGISTER) },
-                onGoHome = { navController.navigate(Routes.HOME) }
+                onGoHome = { navController.navigate(Routes.HOME) },
+                vm = vm
             )
         }
         composable(Routes.RECOVERY) {
-            RecoveryScreen({ navController.popBackStack() })
+            val vm = remember { RecoveryViewModel(userRepo) }
+            RecoveryScreen({ navController.popBackStack() }, vm)
         }
 
         composable(Routes.REGISTER) {
-            RegisterScreen({ navController.popBackStack() })
+            val vm = remember { RegisterViewModel(userRepo) }
+
+            RegisterScreen(
+                onGoBack = { navController.popBackStack() },
+                onGoLogin = { navController.navigate(Routes.LOGIN) },
+                vm
+            )
         }
         composable(Routes.HOME) {
             val vm = remember { HomeViewModel(ingredientRepo, recipeRepo) }
@@ -77,11 +92,3 @@ fun NavApp() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewAppScaffold() {
-    AppNutricionalTheme(
-        useDarkTheme = null,
-        useDynamicColor = false
-    ) { LoginScreen(onGoRegister = {}, onGoRecovery = {}, onGoHome = {}) }
-}

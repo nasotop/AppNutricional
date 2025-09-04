@@ -1,5 +1,6 @@
 package com.example.appnutricional.auth.ui.register
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.semantics.liveRegion
@@ -35,9 +37,11 @@ import com.example.appnutricional.ui.components.TopBar
 @Composable
 fun RegisterScreen(
     onGoBack: () -> Unit,
-    vm: RegisterViewModel = viewModel()
+    onGoLogin: ()-> Unit,
+    vm: RegisterViewModel
 ) {
     val state = vm.uiState
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -231,9 +235,18 @@ fun RegisterScreen(
                     onClick = {
                         vm.submitRegister(
                             onSuccess = {
-                                success, user ->
-                                vm.onRegisterSuccess(success, user) },
-                            onError = {})
+                                success ->
+                                if(success)
+                                    onGoLogin()
+                                else
+                                    Toast.makeText(context, "Ocurrio un error al crear el usuario", Toast.LENGTH_LONG).show()
+
+                            },
+                            onError = {msg ->
+                                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+
+
+                            })
                     },
                     enabled = !state.isSubmitting,
                     modifier = Modifier
