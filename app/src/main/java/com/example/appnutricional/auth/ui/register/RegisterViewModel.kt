@@ -10,6 +10,8 @@ import com.example.appnutricional.auth.domain.AuthValidators
 import com.example.appnutricional.auth.domain.UserRepository
 import com.example.appnutricional.core.domain.DuplicateUserException
 import com.example.appnutricional.core.domain.UserModel
+import com.example.appnutricional.core.extension.toNormalized
+import com.example.appnutricional.core.util.runCatchingInline
 
 class RegisterViewModel(private val userRepository: UserRepository) : ViewModel() {
     var uiState by mutableStateOf(RegisterUiState())
@@ -65,40 +67,52 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
     fun submitRegister(onSuccess: (Boolean) -> Unit, onError: (String) -> Unit) {
 
         validate()
-
         uiState = uiState.copy(showErrors = true)
-
-        if (!uiState.isValid) return onError("Modelo invalido")
+        if (!uiState.isValid) {
+            onError("Modelo inválido")
+            return
+        }
 
         uiState = uiState.copy(isSubmitting = true)
 
-        try {
-            val user = UserModel(
-                names = uiState.names,
-                lastNames = uiState.lastNames,
-                email = uiState.email,
-                password = uiState.password
-            )
+        val email = uiState.email.toNormalized()
+        val userToCreate = UserModel(
+            names = uiState.names,
+            lastNames = uiState.lastNames,
+            email = email,
+            password = uiState.password
+        )
 
-            val usuario = userRepository.findByEmail(uiState.email)
+        val added: Boolean? = runCatchingInline(
+            block = {
+                userRepository.findByEmail(email)?.let {
+                    throw DuplicateUserException(email)
+                }
+                userRepository.add(userToCreate)
+            },
+            onError = { t ->
+                when (t) {
+                    is DuplicateUserException -> {
+                        uiState = uiState.copy(
+                            showErrors = true,
+                            emailError = "El correo ya se encuentra registrado"
+                        )
+                        onError("Correo ya registrado")
+                    }
 
-            if (usuario != null) throw DuplicateUserException(uiState.email)
-
-            val added = userRepository.add(user)
-            if (!added) {
-                onError("No se pudo registrar el usuario")
-                return
+                    else -> {
+                        onError("Error inesperado: ${t.message ?: "desconocido"}")
+                    }
+                }
             }
-            onSuccess(true)
-        } catch (ex: DuplicateUserException) {
-            uiState = uiState.copy(
-                showErrors = true,
-                emailError = ex.message
-            )
-            onError("Correo ya registrado")
+        )
 
-        } finally {
-            uiState = uiState.copy(isSubmitting = false)
+        uiState = uiState.copy(isSubmitting = false)
+
+        if (added == true) {
+            onSuccess(true)
+        } else if (added == false) {
+            onError("No se pudo registrar el usuario")
         }
 
     }

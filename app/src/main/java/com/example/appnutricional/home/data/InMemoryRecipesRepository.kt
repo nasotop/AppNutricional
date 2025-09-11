@@ -130,7 +130,6 @@ class InMemoryRecipesRepository(
         return recipe.copy(ingredients = canon)
     }
 
-    // Para sembrar el repositorio garantizando validez desde el inicio
     private fun normalizedOrThrow(recipe: RecipeModel): RecipeModel =
         normalizeRecipe(recipe)
             ?: error("Seed inválida: ingrediente no encontrado en IngredientRepository")

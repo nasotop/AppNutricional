@@ -72,11 +72,33 @@ class HomeViewModel(
 
     private fun recompute() {
         val s = _ui.value
-        val filtered = if (s.query.isBlank()) s.allIngredients
-        else s.allIngredients.filter { it.name.contains(s.query, ignoreCase = true) }
 
-        val matching = matchRecipes(s.selected, _ui.value.recipes)
+        val base = if (s.query.isBlank()) {
+            s.allIngredients
+        } else {
+            s.allIngredients.filter { it.name.contains(s.query, ignoreCase = true) }
+        }
+
+
+        var exactIndex = -1
+        base.forEachIndexed { idx, ing ->
+            if (ing.name.equals(s.query, ignoreCase = true)) {
+                exactIndex = idx
+                return@forEachIndexed
+            }
+        }
+
+        val filtered = if (exactIndex >= 0) {
+            val head = base[exactIndex]
+            val tail = base.filterIndexed { i, _ -> i != exactIndex }
+            listOf(head) + tail
+        } else {
+            base
+        }
+
+        val matching = matchRecipes(s.selected, s.recipes)
 
         _ui.update { it.copy(filtered = filtered, matching = matching) }
     }
+
 }
