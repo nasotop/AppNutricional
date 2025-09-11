@@ -3,6 +3,7 @@ package com.example.appnutricional.home.data
 import com.example.appnutricional.core.domain.IngredientModel
 import com.example.appnutricional.core.domain.IngredientType
 import com.example.appnutricional.core.domain.RecipeModel
+import com.example.appnutricional.core.extension.toNormalized
 import com.example.appnutricional.home.domain.IngredientsRepository
 import com.example.appnutricional.home.domain.RecipesRepository
 
@@ -48,15 +49,45 @@ class InMemoryRecipesRepository(
     override fun getAll(): List<RecipeModel> = recipes.toList()
 
     override fun findByName(name: String): RecipeModel? =
-        recipes.firstOrNull { it.name.equals(name, ignoreCase = true) }
+        recipes.firstOrNull {
+            it
+                .name
+                .toNormalized()
+                .equals(
+                    name
+                        .toNormalized(),
+                    ignoreCase = true
+                )
+        }
 
     override fun listByIngredientName(ingredientName: String): List<RecipeModel> =
         recipes.filter { recipe ->
-            recipe.ingredients.any { it.name.equals(ingredientName, ignoreCase = true) }
+            recipe
+                .ingredients
+                .any {
+                    it
+                        .name
+                        .toNormalized()
+                        .equals(
+                            ingredientName
+                                .toNormalized(),
+                            ignoreCase = true
+                        )
+                }
         }
 
     override fun add(recipe: RecipeModel): Boolean {
-        if (recipes.any { it.name.equals(recipe.name, ignoreCase = true) }) return false
+        if (recipes.any {
+                it
+                    .name
+                    .toNormalized()
+                    .equals(
+                        recipe
+                            .name
+                            .toNormalized(),
+                        ignoreCase = true
+                    )
+            }) return false
         val canon = normalizeRecipe(recipe) ?: return false
         recipes.add(canon)
         return true
@@ -74,7 +105,16 @@ class InMemoryRecipesRepository(
         val it = recipes.iterator()
         var removed = false
         while (it.hasNext()) {
-            if (it.next().name.equals(name, ignoreCase = true)) {
+            if (it
+                    .next()
+                    .name
+                    .toNormalized()
+                    .equals(
+                        name
+                            .toNormalized(),
+                        ignoreCase = true
+                    )
+            ) {
                 it.remove()
                 removed = true
             }

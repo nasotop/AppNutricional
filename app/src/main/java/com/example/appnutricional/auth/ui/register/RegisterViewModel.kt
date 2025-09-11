@@ -6,7 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.appnutricional.auth.data.InMemoryUserRepository
+import com.example.appnutricional.auth.domain.AuthValidators
 import com.example.appnutricional.auth.domain.UserRepository
+import com.example.appnutricional.core.domain.DuplicateUserException
 import com.example.appnutricional.core.domain.UserModel
 
 class RegisterViewModel(private val userRepository: UserRepository) : ViewModel() {
@@ -39,32 +41,14 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
     }
 
     fun validate() {
-        val emailError = when {
-            uiState.email.isBlank() -> "El correo no puede estar vacío"
-            !Patterns.EMAIL_ADDRESS.matcher(uiState.email)
-                .matches() -> "Formato de email inválido"
+        val emailError = AuthValidators.validateEmail(uiState.email)
+        val passwordError = AuthValidators.validatePassword(uiState.password)
 
-            else -> null
-        }
-        val passwordError = when {
-            uiState.password.isBlank() -> "La contraseña no puede estar vacía"
-            uiState.password.length < 8 -> "Debe tener al menos 8 caracteres"
-            else -> null
-        }
+        val repeatPasswordError =
+            AuthValidators.validateRepeatPassword(uiState.password, uiState.repeatPassword)
+        val namesError = AuthValidators.validateStringBlankField(uiState.names, "nombre")
+        val lastNamesError = AuthValidators.validateStringBlankField(uiState.lastNames, "apellido")
 
-        val repeatPasswordError = when {
-            uiState.repeatPassword.isBlank() -> "La contraseña no puede estar vacía"
-            uiState.repeatPassword != uiState.password -> "Las contraseñas deben ser iguales"
-            else -> null
-        }
-        val namesError = when {
-            uiState.names.isBlank() -> "El nombre no puede estar vacío"
-            else -> null
-        }
-        val lastNamesError = when {
-            uiState.lastNames.isBlank() -> "El apellido no puede estar vacío"
-            else -> null
-        }
         val valid =
             emailError == null && passwordError == null && repeatPasswordError == null && namesError == null && lastNamesError == null
 
@@ -79,9 +63,8 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
     }
 
     fun submitRegister(onSuccess: (Boolean) -> Unit, onError: (String) -> Unit) {
+
         validate()
-
-
 
         uiState = uiState.copy(showErrors = true)
 
@@ -89,28 +72,35 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
 
         uiState = uiState.copy(isSubmitting = true)
 
-        val user = UserModel(
-            names = uiState.names,
-            lastNames = uiState.lastNames,
-            email = uiState.email,
-            password = uiState.password
-        )
-
-        val usuario = userRepository.findByEmail(uiState.email)
-
-        if (usuario != null) {
-            uiState = uiState.copy(showErrors = true)
-            uiState = uiState.copy(isSubmitting = false)
-            uiState = uiState.copy(
-                emailError = "El correo ya se encuentra registrado"
+        try {
+            val user = UserModel(
+                names = uiState.names,
+                lastNames = uiState.lastNames,
+                email = uiState.email,
+                password = uiState.password
             )
-            return onError("Modelo invalido")
+
+            val usuario = userRepository.findByEmail(uiState.email)
+
+            if (usuario != null) throw DuplicateUserException(uiState.email)
+
+            val added = userRepository.add(user)
+            if (!added) {
+                onError("No se pudo registrar el usuario")
+                return
+            }
+            onSuccess(true)
+        } catch (ex: DuplicateUserException) {
+            uiState = uiState.copy(
+                showErrors = true,
+                emailError = ex.message
+            )
+            onError("Correo ya registrado")
+
+        } finally {
+            uiState = uiState.copy(isSubmitting = false)
         }
-        val result = userRepository.add(user)
 
-        uiState = uiState.copy(isSubmitting = false)
-
-        onSuccess(result)
     }
 
 
