@@ -8,6 +8,9 @@
       <SelectionState runConfigName="PreviewAppScaffold">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
+      <SelectionState runConfigName="loginScreen_invalidLogin_showsErrorSnackbar()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
     </selectionStates>
   </component>
 </project>

@@ -3,7 +3,7 @@ package com.example.appnutricional.auth.data
 import com.example.appnutricional.auth.domain.UserRepository
 import com.example.appnutricional.core.domain.UserModel
 
-class InMemoryUserRepository : UserRepository {
+class InMemoryUserRepository {
     private val users = mutableListOf(
         UserModel("Juan", "Pérez", "juan@example.com", "12345678"),
         UserModel("Ana", "López", "ana@example.com", "abcdef12"),
@@ -12,15 +12,15 @@ class InMemoryUserRepository : UserRepository {
         UserModel("Pedro", "Sánchez", "pedro@example.com", "zxcvbnm1"),
     )
 
-    override fun getAll(): List<UserModel> {
+     fun getAll(): List<UserModel> {
         return users.toList()
     }
 
-    override fun findByEmail(email: String): UserModel? {
+     fun findByEmail(email: String): UserModel? {
         return users.find { it.email.equals(email, true) }
     }
 
-    override fun findByCredentials(
+     fun findByCredentials(
         email: String,
         password: String
     ): UserModel? {
@@ -31,7 +31,7 @@ class InMemoryUserRepository : UserRepository {
 
     }
 
-    override fun add(user: UserModel): Boolean {
+     fun add(user: UserModel): Boolean {
         if (users.any { it.email.equals(user.email, true) })
             return false
 

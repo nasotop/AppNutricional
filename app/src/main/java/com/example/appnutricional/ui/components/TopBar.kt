@@ -3,6 +3,7 @@ package com.example.appnutricional.ui.components
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +53,12 @@ fun TopBar(
             if (onSettings != null) {
                 IconButton(onClick = { onSettings.invoke() }) {
                     Icon(imageVector = Icons.Filled.Settings, contentDescription = "Opciones")
+                }
+            }
+
+            if (onMenu != null) {
+                IconButton(onClick = { onMenu.invoke() }) {
+                    Icon(imageVector = Icons.Filled.Menu, contentDescription = "Menú")
                 }
             }
         },

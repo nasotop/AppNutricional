@@ -4,13 +4,14 @@ import com.example.appnutricional.core.domain.IngredientModel
 import com.example.appnutricional.core.domain.IngredientType
 import com.example.appnutricional.core.domain.RecipeModel
 import com.example.appnutricional.core.extension.toNormalized
+import com.example.appnutricional.home.data.mappers.IngredientMapper
 import com.example.appnutricional.home.domain.IngredientsRepository
 import com.example.appnutricional.home.domain.RecipesRepository
 
 class InMemoryRecipesRepository(
     private val ingredientRepo: IngredientsRepository
 
-) : RecipesRepository {
+)  {
     val recipes = mutableListOf(
         RecipeModel(
             name = "Ensalada fresca",
@@ -46,9 +47,9 @@ class InMemoryRecipesRepository(
     ).map(::normalizedOrThrow)
         .toMutableList()
 
-    override fun getAll(): List<RecipeModel> = recipes.toList()
+     fun getAll(): List<RecipeModel> = recipes.toList()
 
-    override fun findByName(name: String): RecipeModel? =
+     fun findByName(name: String): RecipeModel? =
         recipes.firstOrNull {
             it
                 .name
@@ -60,7 +61,7 @@ class InMemoryRecipesRepository(
                 )
         }
 
-    override fun listByIngredientName(ingredientName: String): List<RecipeModel> =
+     fun listByIngredientName(ingredientName: String): List<RecipeModel> =
         recipes.filter { recipe ->
             recipe
                 .ingredients
@@ -76,7 +77,7 @@ class InMemoryRecipesRepository(
                 }
         }
 
-    override fun add(recipe: RecipeModel): Boolean {
+     fun add(recipe: RecipeModel): Boolean {
         if (recipes.any {
                 it
                     .name
@@ -93,7 +94,7 @@ class InMemoryRecipesRepository(
         return true
     }
 
-    override fun update(name: String, newRecipe: RecipeModel): Boolean {
+     fun update(name: String, newRecipe: RecipeModel): Boolean {
         val index = recipes.indexOfFirst { it.name.equals(name, ignoreCase = true) }
         if (index == -1) return false
         val canon = normalizeRecipe(newRecipe) ?: return false
@@ -101,7 +102,7 @@ class InMemoryRecipesRepository(
         return true
     }
 
-    override fun delete(name: String): Boolean {
+     fun delete(name: String): Boolean {
         val it = recipes.iterator()
         var removed = false
         while (it.hasNext()) {
@@ -127,7 +128,7 @@ class InMemoryRecipesRepository(
             ingredientRepo.findByName(wanted.name)
         }
         if (canon.size != recipe.ingredients.size) return null
-        return recipe.copy(ingredients = canon)
+        return recipe.copy(ingredients = canon.map { ing-> IngredientMapper.toModel(ing) })
     }
 
     private fun normalizedOrThrow(recipe: RecipeModel): RecipeModel =

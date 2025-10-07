@@ -234,6 +234,7 @@ fun RegisterScreen(
                 Button(
                     onClick = {
                         vm.submitRegister(
+                            context,
                             onSuccess = {
                                 success ->
                                 if(success)

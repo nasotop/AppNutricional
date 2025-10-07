@@ -7,7 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.appnutricional.auth.domain.UserRepository
 
-class RecoveryViewModel(private val userRepo: UserRepository): ViewModel() {
+class RecoveryViewModel(): ViewModel() {
     var uiState by mutableStateOf(RecoveryUiState())
         private set
     fun onEmailChange(newEmail: String){

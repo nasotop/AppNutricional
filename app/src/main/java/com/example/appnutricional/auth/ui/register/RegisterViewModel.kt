@@ -1,19 +1,22 @@
 package com.example.appnutricional.auth.ui.register
 
-import android.util.Patterns
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.appnutricional.auth.data.InMemoryUserRepository
+import androidx.lifecycle.viewModelScope
+import com.example.appnutricional.auth.data.mappers.UserMapper
 import com.example.appnutricional.auth.domain.AuthValidators
-import com.example.appnutricional.auth.domain.UserRepository
+import com.example.appnutricional.core.data.AppDatabase
 import com.example.appnutricional.core.domain.DuplicateUserException
 import com.example.appnutricional.core.domain.UserModel
 import com.example.appnutricional.core.extension.toNormalized
-import com.example.appnutricional.core.util.runCatchingInline
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class RegisterViewModel(private val userRepository: UserRepository) : ViewModel() {
+class RegisterViewModel() : ViewModel() {
     var uiState by mutableStateOf(RegisterUiState())
         private set
 
@@ -64,8 +67,11 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
         )
     }
 
-    fun submitRegister(onSuccess: (Boolean) -> Unit, onError: (String) -> Unit) {
-
+    fun submitRegister(
+        context: Context,
+        onSuccess: (Boolean) -> Unit,
+        onError: (String) -> Unit
+    ) {
         validate()
         uiState = uiState.copy(showErrors = true)
         if (!uiState.isValid) {
@@ -83,38 +89,37 @@ class RegisterViewModel(private val userRepository: UserRepository) : ViewModel(
             password = uiState.password
         )
 
-        val added: Boolean? = runCatchingInline(
-            block = {
-                userRepository.findByEmail(email)?.let {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val db = AppDatabase.getDatabase(context)
+
+                db.userRepository().findByEmail(email)?.let {
                     throw DuplicateUserException(email)
                 }
-                userRepository.add(userToCreate)
-            },
-            onError = { t ->
-                when (t) {
-                    is DuplicateUserException -> {
-                        uiState = uiState.copy(
-                            showErrors = true,
-                            emailError = "El correo ya se encuentra registrado"
-                        )
-                        onError("Correo ya registrado")
-                    }
 
-                    else -> {
-                        onError("Error inesperado: ${t.message ?: "desconocido"}")
-                    }
+                val id:Long = db.userRepository().add(UserMapper.toEntity(userToCreate))
+
+                withContext(Dispatchers.Main) {
+                    uiState = uiState.copy(isSubmitting = false)
+                    if (id>0 ) onSuccess(true)
+                    else onError("No se pudo registrar el usuario")
+                }
+            } catch (e: DuplicateUserException) {
+                withContext(Dispatchers.Main) {
+                    uiState = uiState.copy(
+                        isSubmitting = false,
+                        showErrors = true,
+                        emailError = "El correo ya se encuentra registrado"
+                    )
+                    onError("Correo ya registrado")
+                }
+            } catch (t: Throwable) {
+                withContext(Dispatchers.Main) {
+                    uiState = uiState.copy(isSubmitting = false)
+                    onError("Error inesperado: ${t.message ?: "desconocido"}")
                 }
             }
-        )
-
-        uiState = uiState.copy(isSubmitting = false)
-
-        if (added == true) {
-            onSuccess(true)
-        } else if (added == false) {
-            onError("No se pudo registrar el usuario")
         }
-
     }
 
 

@@ -51,6 +51,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import com.example.appnutricional.home.data.InMemoryIngredientsRepository
 import com.example.appnutricional.home.data.InMemoryRecipesRepository
 import kotlinx.coroutines.launch
@@ -127,19 +129,14 @@ fun HomeScreen(
             )
             Button(
                 onClick = {
-                    val err = vm.createRecipe()
-                    scope.launch {
-                        snackbar.showSnackbar(err ?: "Receta creada")
-                    }
-                    if (err == null && state.matching.any {
-                            it.name.equals(
-                                state.newRecipeName,
-                                true
-                            )
-                        }.not()) {
-                        // no navegues aquí: el VM ya insertó y matching se recalculó;
-                        // si quieres navegar, llama onRecipeChosen con la recién creada
-                        // onRecipeChosen(state.recipes.last())
+                    vm.createRecipe { err ->
+                        scope.launch {
+                            snackbar.showSnackbar(err ?: "Receta creada")
+                        }
+                        if (err == null && state.matching.none { it.name.equals(state.newRecipeName, true) }) {
+                            // si necesitas navegar, hazlo aquí usando el último estado ya recomputado
+                            // onRecipeChosen(state.recipes.last())
+                        }
                     }
                 },
                 enabled = state.newRecipeName.isNotBlank() && state.selected.isNotEmpty(),
@@ -241,9 +238,8 @@ fun PreviewAppScaffold() {
         useDarkTheme = null,
         useDynamicColor = false
     ) {
-        val ingredientRepo: IngredientsRepository = InMemoryIngredientsRepository()
-        val recipeRepo: RecipesRepository = InMemoryRecipesRepository(ingredientRepo)
-        val vm = remember { HomeViewModel(ingredientRepo, recipeRepo) }
+        val context = LocalContext.current
+        val vm = remember(context) { HomeViewModel(context) }
         HomeScreen(vm, onGoBack = {}, onRecipeChosen = {})
     }
 }

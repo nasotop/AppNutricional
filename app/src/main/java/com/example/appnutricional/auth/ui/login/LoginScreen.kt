@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -44,11 +45,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.appnutricional.ui.components.TopBar
 import com.example.appnutricional.R
-import com.example.appnutricional.auth.data.InMemoryUserRepository
-import com.example.appnutricional.auth.domain.UserRepository
 import com.example.appnutricional.ui.theme.AppNutricionalTheme
 
 
@@ -136,6 +134,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .minimumInteractiveComponentSize()
+                        .testTag("emailField")
                 )
 
                 OutlinedTextField(
@@ -165,6 +164,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .minimumInteractiveComponentSize()
+                        .testTag("passwordField")
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -180,6 +180,7 @@ fun LoginScreen(
                 Button(
                     onClick = {
                         vm.submitLogin(
+                            context,
                             onSuccess = { onGoHome() },
                             onError = { msg ->
                                 Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
@@ -189,6 +190,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
+                        .testTag("submitButton")
                 ) {
                     Text(if (state.isSubmitting) "Enviando..." else "Iniciar sesión")
                 }
@@ -225,6 +227,8 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .heightIn(min = 48.dp)
                         .semantics { role = Role.Button }
+
+                        .testTag("recoveryButton")
                 ) {
                     Text(
                         "Recuperar contraseña",
@@ -244,7 +248,6 @@ fun PreviewAppScaffold() {
         useDarkTheme = null,
         useDynamicColor = false
     ) {
-        val userRepo: UserRepository = InMemoryUserRepository()
-        val vm = remember { LoginViewModel(userRepo) }
+        val vm = remember { LoginViewModel() }
         LoginScreen(onGoRegister = {}, onGoRecovery = {}, onGoHome = {}, vm) }
 }

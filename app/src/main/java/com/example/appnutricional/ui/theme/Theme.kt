@@ -85,7 +85,6 @@ fun AppNutricionalTheme(
         } else {
             if (darkTheme) DarkColors else LightColors
         }
-
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography, // definido abajo

@@ -1,31 +1,56 @@
 package com.example.appnutricional.home.ui.home
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.appnutricional.core.data.AppDatabase
 import com.example.appnutricional.core.domain.IngredientModel
 import com.example.appnutricional.core.domain.RecipeModel
+import com.example.appnutricional.home.data.mappers.IngredientMapper
+import com.example.appnutricional.home.data.mappers.RecipeMapper
 import com.example.appnutricional.home.domain.IngredientsRepository
 import com.example.appnutricional.home.domain.RecipesRepository
 import com.example.appnutricional.home.domain.matchRecipes
 import com.example.appnutricional.home.domain.validateNewRecipe
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeViewModel(
-    private val ingredientRepo: IngredientsRepository,
-    private val recipeRepo: RecipesRepository
+    context: Context
 ) : ViewModel() {
 
+    private val db = AppDatabase.getDatabase(context)
+    private val ingredientRepo = db.ingredientRepository()
+    private val recipeRepo = db.recipeRepository()
     private val _ui = MutableStateFlow(
         HomeUiState(
-            allIngredients = ingredientRepo.getAll(),
-            recipes = recipeRepo.getAll()
+            allIngredients = emptyList(),
+            recipes = emptyList()
         )
     )
     val ui: StateFlow<HomeUiState> = _ui
 
     init {
-        recompute()
+        loadInitial()
+    }
+
+    private fun loadInitial() {
+        viewModelScope.launch {
+            val ingEntities = withContext(Dispatchers.IO) { ingredientRepo.getAll() }
+            val recEntities = withContext(Dispatchers.IO) { recipeRepo.getAll() }
+
+            _ui.update {
+                it.copy(
+                    allIngredients = ingEntities.map(IngredientMapper::toModel),
+                    recipes = recEntities.map(RecipeMapper::toModel)
+                )
+            }
+            recompute()
+        }
     }
 
     fun onQueryChange(q: String) {
@@ -46,28 +71,44 @@ class HomeViewModel(
         _ui.update { it.copy(newRecipeName = name) }
     }
 
-    /**
-     * Crea la receta si pasa validación. Devuelve null si OK, o mensaje de error si falla.
-     */
-    fun createRecipe(): String? {
-        val s = _ui.value
-        val err = validateNewRecipe(
-            name = s.newRecipeName.trim(),
-            selected = s.selected,
-            recipeExists = { n -> recipeRepo.findByName(n) != null }
-        )
-        if (err != null) return err
+    fun createRecipe(onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            val s = ui.value
+            val trimmed = s.newRecipeName.trim()
 
-        val newRecipe = RecipeModel(s.newRecipeName.trim(), s.selected)
-        val ok = recipeRepo.add(newRecipe)
-        if (!ok) return "No se pudo crear"
+            val exists = withContext(Dispatchers.IO) { recipeRepo.findByName(trimmed) != null }
 
-        _ui.update { it.copy(
-            recipes = it.recipes + newRecipe,
-            newRecipeName = ""
-        )}
-        recompute()
-        return null
+            val err = validateNewRecipe(
+                name = trimmed,
+                selected = s.selected,
+                recipeExists = { exists }
+            )
+            if (err != null) {
+                onResult(err)
+                return@launch
+            }
+
+            val newRecipeModel = RecipeModel(trimmed, s.selected)
+            val entity = RecipeMapper.toEntity(newRecipeModel)
+
+            val insertedOk = withContext(Dispatchers.IO) {
+                val res = recipeRepo.add(entity)
+                when (res) {
+                    is Long -> res > 0L
+                    is Int  -> res > 0
+                    else    -> false
+                }
+            }
+
+            if (!insertedOk) {
+                onResult("No se pudo crear")
+                return@launch
+            }
+
+            _ui.update { it.copy(recipes = it.recipes + newRecipeModel, newRecipeName = "") }
+            recompute()
+            onResult(null)
+        }
     }
 
     private fun recompute() {
@@ -78,7 +119,6 @@ class HomeViewModel(
         } else {
             s.allIngredients.filter { it.name.contains(s.query, ignoreCase = true) }
         }
-
 
         var exactIndex = -1
         base.forEachIndexed { idx, ing ->
@@ -92,9 +132,7 @@ class HomeViewModel(
             val head = base[exactIndex]
             val tail = base.filterIndexed { i, _ -> i != exactIndex }
             listOf(head) + tail
-        } else {
-            base
-        }
+        } else base
 
         val matching = matchRecipes(s.selected, s.recipes)
 
